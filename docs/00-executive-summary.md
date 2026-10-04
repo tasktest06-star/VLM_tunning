@@ -2,6 +2,13 @@
 
 Executive summary of research conducted 2026-10-04 for laboratory-equipment recognition in video.
 
+> **PARTLY SUPERSEDED.** Read [`06-post-verification-corrections.md`](06-post-verification-corrections.md)
+> and [`07-engineering-traps-and-measurability.md`](07-engineering-traps-and-measurability.md) first.
+> In particular: the "do not fine-tune" verdict below is **withdrawn**, the model identifier should be
+> `facebook/sam3` rather than `facebook/sam3.1`, the cost model here is two to four times optimistic,
+> and the performance estimates are the optimistic end of the range.
+
+
 ## The problem as scoped
 
 | Constraint | Value | Consequence |

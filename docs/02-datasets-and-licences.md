@@ -120,7 +120,8 @@ One of these will bite late, when it is expensive to unpick.
 
 | Model | Licence | Verdict |
 |---|---|---|
-| Grounding DINO, MM-Grounding-DINO, OWLv2, RF-DETR, Detectron2 | Apache 2.0 | Safe |
+| OWLv2, RF-DETR, Detectron2 | Apache 2.0 | Safe |
+| Grounding DINO, MM-Grounding-DINO, GLIP | Apache 2.0 **code**, but weights are pretrained on Objects365 | **Withdrawn, see below.** Objects365 states "available for the academic purpose only", which transitively taints every checkpoint derived from it |
 | SAM 2 and 2.1, code and weights | Apache 2.0 | Safe |
 | GLIP | MIT | Safe |
 | SAM 3 and 3.1 | SAM License. Commercial use permitted, royalty-free, derivatives inherit the terms, attribution required in publications, no military, nuclear, weapons or espionage use, no monthly-active-user threshold | Workable, worth a legal read |
@@ -132,8 +133,24 @@ One of these will bite late, when it is expensive to unpick.
 | SAM-Track | AGPL plus written commercial permission required | Avoid |
 
 Every YOLO baseline in the published laboratory-equipment papers is copyleft-encumbered. Their
-numbers are citable, their weights are not usable. An all-Apache pipeline exists: MM-Grounding-DINO
-or OWLv2 for detection, SAM 2.1 for propagation, RF-DETR for the distilled student.
+numbers are citable, their weights are not usable.
+
+**Correction, and it runs opposite to the original framing.** The Objects365 download page states
+verbatim that the dataset "is available for the academic purpose only", with images under Flickr
+terms carrying a no-redistribution clause. That transitively taints the **weights** of Grounding
+DINO, every MM-Grounding-DINO checkpoint, and GLIP. Apache-licensed code wrapping
+academic-only-derived weights is not a commercial fallback, so the earlier "all-Apache pipeline"
+claim naming MM-Grounding-DINO is **withdrawn**.
+
+For a commercial product, SAM 3 is arguably the cleaner side, since its licence is at least an
+explicit royalty-free grant from the rights holder. The genuinely clean open-vocabulary teacher is
+**OWLv2**, Apache 2.0, ungated, derived from WebLI and CLIP. It also provides the cross-image
+exemplar interface that SAM 3 lacks.
+
+Further blockers found later and documented in `06-post-verification-corrections.md`: WeakSAM has
+**no licence at all**; the two open video-level localisation implementations are GPL-3.0;
+HeinSight4.0's released **weights** inherit an AGPL claim even though its data is genuinely CC BY
+4.0; and ImageNet-21k is non-commercial research only.
 
 Both SAM 3 repositories are gated behind a contact-sharing agreement with Meta, so access must be
 requested manually. That will break any unattended setup script or continuous integration job.

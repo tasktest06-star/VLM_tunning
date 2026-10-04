@@ -4,7 +4,9 @@ Research into recognising objects in video when the only supervision is a small 
 clip-level labels. The concrete target is laboratory equipment.
 
 The question that prompted this was how to fine-tune a vision-language model under that constraint.
-**The answer is that you should not.** These documents set out why, and what to do instead.
+**The answer is: yes, but last, on a copy, with a capped schedule and weight averaging, and only
+after you have proved you can measure the difference.** An earlier version of this research said not
+to fine-tune at all. Verification overturned that. See [docs/06](docs/06-post-verification-corrections.md).
 
 ## The constraints this is scoped to
 
@@ -30,6 +32,8 @@ to destroy exactly that.
 | [docs/00-executive-summary.md](docs/00-executive-summary.md) | The answer. Verified facts, recommended pipeline, honest ceiling, decision guide. Stands alone. |
 | [docs/05-annotation-budget-verification.md](docs/05-annotation-budget-verification.md) | **Read before spending any of your own hours annotating.** Refutes the headline claim from the earlier studies and resolves how much to annotate. |
 | [docs/02-datasets-and-licences.md](docs/02-datasets-and-licences.md) | Reference tables. Public data you can download today, which detector has seen which class, the homonym trap, licence landmines. |
+| [docs/06-post-verification-corrections.md](docs/06-post-verification-corrections.md) | **Authoritative. Wins over 00 to 05.** Reverses the no-fine-tuning verdict, fixes the model identifier, and corrects the cost model by two to four times. |
+| [docs/07-engineering-traps-and-measurability.md](docs/07-engineering-traps-and-measurability.md) | **Read before writing code.** Eleven verified traps that each silently invalidate a run, plus the finding that measurement is floored by your session count. |
 | [docs/01-gap-analysis.md](docs/01-gap-analysis.md) | Twelve defects found in a sibling auto-labelling pipeline, each with a file and line reference. Applies to `customobjectdetection`, not to this repository. |
 | [docs/03-tracking-and-open-vocabulary.md](docs/03-tracking-and-open-vocabulary.md) | Long primary study. Trackers, adding a class without retraining, evaluating with no box ground truth. |
 | [docs/04-unlabelled-pool-and-annotation.md](docs/04-unlabelled-pool-and-annotation.md) | Long primary study. Semi-supervised detection from zero boxes, pseudo-label constraints. |
@@ -39,10 +43,14 @@ annotation guidance is **superseded** by document 05 and they carry pointers say
 
 ## The five findings that change what you would otherwise do
 
-**Do not fine-tune the open-vocabulary model.** Reported collapse is from 51.90 to 0.10 average
-precision at 0.5 after a single-class fine-tune, against 51.90 held exactly by a frozen detector
-with visual prompting. The source experiment may be degenerate and that is still under verification,
-but the direction is not in question and it is fatal to a growing vocabulary.
+**Fine-tuning is safe if done correctly, and the earlier prohibition here was wrong.** The collapse
+figure it rested on, 51.90 to 0.10, came from a thermal-infrared fine-tune evaluated on colour
+images. That is a modality shift, not a vocabulary effect, and this project is colour throughout. The
+real evidence runs the other way: a full fine-tune of an open-vocabulary detector cost 2.9 points
+in the wild while **gaining 9.7 points on classes it never saw**, and weight averaging ended up 3.3
+points above the frozen model. Fine-tune a copy, without mask loss, on a capped schedule, then sweep
+the weight-average coefficient. Measure retention by the **median** across held-out classes, never
+the mean, because a 9% mean drop concealed a 61% median collapse.
 
 **You are not starting from zero box labels.** Roughly 22,000 CC BY 4.0 box-annotated
 laboratory-apparatus instances are downloadable across four datasets, two of them video-derived. The
@@ -63,6 +71,16 @@ still the best use of annotation time, but for a different reason.
 **Semi-supervised object detection does not apply here.** No published method bootstraps from
 image-level or video-level labels alone, and a 2026 result shows the state of the art collapsing to
 1.00 mean average precision at one shot per class.
+
+**Split localisation from classification.** Fine-grained instrument names fail as detection prompts.
+A surgical-instrument study found the instrument name unusable and fell back to a generic prompt plus
+a crop classifier. So localise with generic prompts such as "laboratory instrument" or "glassware",
+then classify the crops with a frozen image-text model under the clip label as a multiple-instance
+constraint. This is what makes centrifuge and spectrophotometer tractable at all.
+
+**Measurement is floored by your recording sessions, not your clips.** With four sessions the honest
+interval on the headline metric is about 15 points wide, and labelling more clips in the same rooms
+does not narrow it. Most method comparisons this project would want are therefore unresolvable.
 
 ## The recommended pipeline, in brief
 
@@ -87,9 +105,17 @@ Two independent benchmarks put video-level supervision at roughly 58% of fully-s
 performance at overlap 0.5, and roughly 35% at strict thresholds. Expect weak strict-threshold
 localisation throughout. That is inherent to the supervision available, not a flaw in the method.
 
-Treat the per-class estimates in the executive summary as **under downward revision**. Zero-shot
-median average precision across a 35-domain suite is 11.9 to 18.4, with specialised domains as low
-as 0.25, and laboratory equipment is fine-grained and largely out of vocabulary.
+Revised figures, superseding the executive summary: detection at overlap 0.5 of **30 to 50 on common
+classes and 5 to 20 on rare or confusable ones**, averaged over overlaps 12 to 22, tracking 35 to 55
+on static equipment. Clip-level multi-label, which is what the supervision actually fits, reaches
+0.65 to 0.85 on common classes.
+
+Confusable benchtop siblings sit at 0.40 to 0.70 and **moving them needs 50 to 100 clips per class
+from different rooms, cameras and instrument brands, not more method work.** That is a data-diversity
+problem, not a modelling one.
+
+Plainly: the realistic outcome is a useful annotation-assist and retrieval tool, not a production
+detector.
 
 ## Status and how to read the confidence markers
 
@@ -99,8 +125,9 @@ saturated and were collected under far easier conditions than handheld laborator
 
 Verification is ongoing. Two questions remain open and are marked in the documents:
 
-- The catastrophic-forgetting magnitude, whose source experiment may be degenerate.
-- An unreproduced throughput figure that drives the best-case cost model. Plan with the slower number.
+- **How many distinct recording sessions, rooms and physical instrument units are behind the 150 clips?** This blocks the measurement plan entirely. See document 07, section 8.
+- An unreproduced throughput figure that drove the best-case cost model. Plan without it.
+- A claimed fivefold speedup from graph capture, still resting on one unreproduced report.
 
 ## Branches
 
