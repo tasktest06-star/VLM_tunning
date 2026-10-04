@@ -1,0 +1,43 @@
+# The core needs NOTHING. Every module under vlmlab/ except backends/ and
+# train/ imports with the standard library alone, which is what lets the whole
+# pipeline run and be tested on a machine with no GPU and no package manager.
+#
+#   python3 -m unittest discover tests      # 375 tests, zero dependencies
+#   python3 -m vlmlab.cli run --backend fake --manifest examples/manifest.json
+#
+# Install the extras below only on the machine that has the GPUs.
+
+# --- phase one, the annotation assistant -------------------------------------
+# torch>=2.7                 # CUDA 12.6 or newer for the detector
+# transformers>=5.0          # must be a build that integrates SAM 3
+# pillow>=10.0
+# torchvision>=0.22          # only for mask-to-box conversion
+
+# --- phase three, the low-rank fine-tune -------------------------------------
+# peft>=0.11
+# bitsandbytes>=0.43         # four-bit base weights
+# accelerate>=0.30
+
+# --- phase four, the student detector ----------------------------------------
+# (no extra packages; RT-DETR ships inside transformers)
+
+# --- evaluation ---------------------------------------------------------------
+# trackeval==1.3.0           # the MAINTAINED FORK. Upstream does not import:
+#                            # its TAO reader still uses numpy aliases removed
+#                            # in 1.24 (December 2022) and is unmaintained.
+# pycocotools>=2.0.7         # OPTIONAL. Only for the cross-check in
+#                            # eval/crosscheck.py. Average precision is
+#                            # implemented in pure Python as the tested
+#                            # reference and does not need this.
+
+# --- frame extraction ---------------------------------------------------------
+# ffmpeg and ffprobe must be on PATH. Decoding happens ONCE, outside any loop.
+
+# --- deliberately absent ------------------------------------------------------
+# flash-attn      No wheels are published, so installing means a source build
+#                 that takes hours or is killed for memory. The attention
+#                 implementation built into torch is sufficient here, and the
+#                 configuration freezes that choice.
+# ultralytics     AGPL-3.0, along with every YOLO baseline in the published
+#                 laboratory-equipment papers. Their numbers are citable, their
+#                 weights are not usable. RT-DETR is the permissive substitute.

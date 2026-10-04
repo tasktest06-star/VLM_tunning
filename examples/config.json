@@ -1,0 +1,35 @@
+{
+  "_comment": [
+    "Only non-frozen settings may appear here. A frozen field raises on load:",
+    "each corresponds to a library default that is wrong and fails silently.",
+    "Run `python3 -m vlmlab.cli provenance` to see how well grounded each",
+    "default is, and which four values nobody has ever measured."
+  ],
+  "detector": {
+    "frame_size": 448,
+    "sample_fps": 2.0,
+    "keyframe_stride": 8,
+    "max_concepts_per_clip": 5,
+    "score_threshold": 0.6
+  },
+  "propagator": {
+    "chunk_frames": 300,
+    "chunk_overlap": 8
+  },
+  "cascade": {
+    "n_hard_negatives": 4,
+    "presence_threshold": 0.5,
+    "temporal_min_appearances": 2
+  },
+  "eval": {
+    "frames_per_clip": 3,
+    "n_folds": 5,
+    "pre_registered_mde": 10.0,
+    "seed": 0
+  },
+  "lora": {
+    "rank": 8,
+    "epochs": 2
+  },
+  "clip_duration_s": 180.0
+}

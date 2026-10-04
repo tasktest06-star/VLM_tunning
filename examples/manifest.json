@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "One entry per labelled clip. session_id is the grouping unit for every",
+    "split and is NOT optional: grouping by clip still leaks instrument",
+    "identity and background, because several clips show the same bench.",
+    "",
+    "container_frame_count must be a real probed value. The pipeline refuses",
+    "to guess, because the usual fallback silently samples only the opening",
+    "moment of every clip. Run scripts/extract_frames.py to fill these in."
+  ],
+  "clips": [
+    {"clip_id": "clip_0001", "session_id": "lab_a_day1", "room_id": "lab_a",
+     "labels": ["beaker", "centrifuge"],
+     "duration_s": 180.0, "container_frame_count": 5400, "fps": 30.0,
+     "path": "raw/clip_0001.mp4"},
+    {"clip_id": "clip_0002", "session_id": "lab_a_day1", "room_id": "lab_a",
+     "labels": ["microscope", "test_tube", "test_tube_holder"],
+     "duration_s": 176.5, "container_frame_count": 5295, "fps": 30.0,
+     "path": "raw/clip_0002.mp4"},
+    {"clip_id": "clip_0003", "session_id": "lab_b_day2", "room_id": "lab_b",
+     "labels": ["fume_hood", "conical_flask"],
+     "duration_s": 182.0, "container_frame_count": 5460, "fps": 30.0,
+     "path": "raw/clip_0003.mp4"},
+    {"clip_id": "clip_0004", "session_id": "lab_b_day2", "room_id": "lab_b",
+     "labels": ["autoclave"],
+     "duration_s": 179.0, "container_frame_count": 5370, "fps": 30.0,
+     "path": "raw/clip_0004.mp4"}
+  ]
+}

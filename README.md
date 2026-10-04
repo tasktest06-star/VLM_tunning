@@ -25,6 +25,30 @@ Two of these pull against each other, and resolving that tension is most of the 
 open-ended class list requires zero-shot generalisation. Fine-tuning on a closed label set is known
 to destroy exactly that.
 
+## The code
+
+An implementation of the three-phase plan lives in `vlmlab/`. It runs with
+**no dependencies at all**:
+
+```bash
+python3 -m unittest discover tests          # 377 tests, standard library only
+python3 -m vlmlab.cli run --backend fake \
+    --manifest examples/manifest.json --config examples/config.json
+```
+
+That is deliberate. The core is standard library only, so the clip-label
+cascade, the statistics, the exporters and the whole orchestration are
+genuinely tested rather than assumed. The three GPU adapters are written
+against the same contract the fake backend passes, and are marked untested in
+their own docstrings. See [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for
+what is and is not verified, and for the five silent bugs the test suite
+caught.
+
+**No memory figure, throughput number or accuracy number in this repository
+came from running a model.** The first task on the GPU machine is
+`scripts/benchmark_vram.py`, because peak detector memory on a 12GB card is
+unmeasured anywhere and every cost estimate depends on it.
+
 ## Read in this order
 
 | Document | Read it for |
@@ -32,6 +56,7 @@ to destroy exactly that.
 | [docs/00-executive-summary.md](docs/00-executive-summary.md) | The answer. Verified facts, recommended pipeline, honest ceiling, decision guide. Stands alone. |
 | [docs/05-annotation-budget-verification.md](docs/05-annotation-budget-verification.md) | **Read before spending any of your own hours annotating.** Refutes the headline claim from the earlier studies and resolves how much to annotate. |
 | [docs/02-datasets-and-licences.md](docs/02-datasets-and-licences.md) | Reference tables. Public data you can download today, which detector has seen which class, the homonym trap, licence landmines. |
+| [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) | What the code does, what is tested, and the eleven traps it enforces mechanically. |
 | [docs/08-resolved-constraints-and-plan.md](docs/08-resolved-constraints-and-plan.md) | **Start here. Current position.** The three confirmed project constraints, what they unblock, the three-phase plan, and the fine-tuning recipe for this label budget. |
 | [docs/06-post-verification-corrections.md](docs/06-post-verification-corrections.md) | **Authoritative. Wins over 00 to 05.** Reverses the no-fine-tuning verdict, fixes the model identifier, and corrects the cost model by two to four times. |
 | [docs/07-engineering-traps-and-measurability.md](docs/07-engineering-traps-and-measurability.md) | **Read before writing code.** Eleven verified traps that each silently invalidate a run, plus the finding that measurement is floored by your session count. |
