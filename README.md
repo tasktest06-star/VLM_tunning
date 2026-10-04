@@ -32,6 +32,7 @@ to destroy exactly that.
 | [docs/00-executive-summary.md](docs/00-executive-summary.md) | The answer. Verified facts, recommended pipeline, honest ceiling, decision guide. Stands alone. |
 | [docs/05-annotation-budget-verification.md](docs/05-annotation-budget-verification.md) | **Read before spending any of your own hours annotating.** Refutes the headline claim from the earlier studies and resolves how much to annotate. |
 | [docs/02-datasets-and-licences.md](docs/02-datasets-and-licences.md) | Reference tables. Public data you can download today, which detector has seen which class, the homonym trap, licence landmines. |
+| [docs/08-resolved-constraints-and-plan.md](docs/08-resolved-constraints-and-plan.md) | **Start here. Current position.** The three confirmed project constraints, what they unblock, the three-phase plan, and the fine-tuning recipe for this label budget. |
 | [docs/06-post-verification-corrections.md](docs/06-post-verification-corrections.md) | **Authoritative. Wins over 00 to 05.** Reverses the no-fine-tuning verdict, fixes the model identifier, and corrects the cost model by two to four times. |
 | [docs/07-engineering-traps-and-measurability.md](docs/07-engineering-traps-and-measurability.md) | **Read before writing code.** Eleven verified traps that each silently invalidate a run, plus the finding that measurement is floored by your session count. |
 | [docs/01-gap-analysis.md](docs/01-gap-analysis.md) | Twelve defects found in a sibling auto-labelling pipeline, each with a file and line reference. Applies to `customobjectdetection`, not to this repository. |
@@ -128,6 +129,19 @@ Verification is ongoing. Two questions remain open and are marked in the documen
 - **How many distinct recording sessions, rooms and physical instrument units are behind the 150 clips?** This blocks the measurement plan entirely. See document 07, section 8.
 - An unreproduced throughput figure that drove the best-case cost model. Plan without it.
 - A claimed fivefold speedup from graph capture, still resting on one unreproduced report.
+
+## Confirmed constraints
+
+| Constraint | Value | Consequence |
+|---|---|---|
+| Recording sessions behind the clips | 9 to 20 | Measurement viable. Interval 8 to 11 points, so differences above about 10 points are resolvable |
+| Use | Research and publication only | Unblocks ImageNet-21k laboratory crops and the Objects365-derived detectors, which were the best resources available |
+| Deliverable | Annotation assistant first, measurement second | See the three-phase plan in document 08 |
+
+Research-only use matters more than it sounds. ImageNet-21k's 17 laboratory synsets, about 14,400
+images, are the only public source with real coverage of the classes that have no boxes anywhere:
+autoclave, microscope, analytical balance, spectrophotometer and centrifuge. They are now usable, and
+they are the obvious training set for the crop classifier.
 
 ## Branches
 
