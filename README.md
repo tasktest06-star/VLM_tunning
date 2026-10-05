@@ -31,7 +31,7 @@ An implementation of the three-phase plan lives in `vlmlab/`. It runs with
 **no dependencies at all**:
 
 ```bash
-python3 -m unittest discover tests          # 500 tests, standard library only
+python3 -m unittest discover tests          # 509 tests, standard library only
 python3 -m vlmlab.cli run --backend fake \
     --manifest examples/manifest.json --config examples/config.json
 ```
@@ -40,9 +40,19 @@ That is deliberate. The core is standard library only, so the clip-label
 cascade, the statistics, the exporters and the whole orchestration are
 genuinely tested rather than assumed. The three GPU adapters are written
 against the same contract the fake backend passes, and are marked untested in
-their own docstrings. See [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for
-what is and is not verified, and for the five silent bugs the test suite
-caught.
+their own docstrings.
+
+**New to this? Read [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).** Ten
+minutes, no installation, and it explains what every field of the output means.
+
+| Guide | For |
+|---|---|
+| [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Running it in ten minutes and understanding the output |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Why the pipeline has these stages, with the data flow |
+| [RUNBOOK.md](docs/RUNBOOK.md) | Execution on the GPU machine, phase by phase, with troubleshooting |
+| [MODULES.md](docs/MODULES.md) | Module-by-module reference of all forty-one modules |
+| [IMPLEMENTATION.md](docs/IMPLEMENTATION.md) | What is tested, what is not, and the bugs the suite caught |
+| [BRANCHES.md](docs/BRANCHES.md) | Why there are three branches and when to let them diverge |
 
 **No memory figure, throughput number or accuracy number in this repository
 came from running a model.** The first task on the GPU machine is

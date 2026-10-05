@@ -9,7 +9,7 @@ for the traps the code enforces.
 ## Run it now, with no dependencies
 
 ```bash
-python3 -m unittest discover tests          # 500 tests, standard library only
+python3 -m unittest discover tests          # 509 tests, standard library only
 python3 -m vlmlab.cli run --backend fake \
     --manifest examples/manifest.json --config examples/config.json
 ```
