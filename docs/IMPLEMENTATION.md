@@ -9,7 +9,7 @@ for the traps the code enforces.
 ## Run it now, with no dependencies
 
 ```bash
-python3 -m unittest discover tests          # 377 tests, standard library only
+python3 -m unittest discover tests          # 500 tests, standard library only
 python3 -m vlmlab.cli run --backend fake \
     --manifest examples/manifest.json --config examples/config.json
 ```
@@ -45,6 +45,17 @@ module-level import even there.
 | `vlmlab/consistency.py` | yes | Temporal and cross-model filters |
 | `vlmlab/federated.py` | yes | Positive, negative, unknown bookkeeping |
 | `vlmlab/pipeline.py` | yes | Orchestration, chunking, double propagation |
+| `vlmlab/naming.py` | yes | Names generic detections under the clip-label constraint |
+| `vlmlab/gold.py` | yes | Gold-frame selection, scoring records, annotation budget |
+| `vlmlab/eval/report.py` | yes | End-to-end scoring and paired comparison |
+| `vlmlab/eval/tracking.py` | yes | Detection and association accuracy over tracks |
+| `vlmlab/eval/crosscheck.py` | n/a | Optional comparison, skipped without the compiled library |
+| `vlmlab/data/public.py` | yes | Public box datasets, mapping and session re-splitting |
+| `vlmlab/data/imagenet21k.py` | yes | Classification crops for the fine-grained head |
+| `vlmlab/data/rf100vl.py` | yes | The free dry run before spending annotation budget |
+| `vlmlab/train/retention.py` | yes | Held-out-class retention, reported by median |
+| `vlmlab/train/sweep.py` | yes | Weight-average sweep and operating-point choice |
+| `vlmlab/export/rtdetr_yaml.py` | yes | Student dataset descriptor, write-only |
 | `vlmlab/preflight.py` | yes | Pure runtime checks |
 | `vlmlab/checkpoint.py` | yes | Resume, JSON not pickle |
 | `vlmlab/eval/dist.py` | yes | Incomplete beta, inverse Student-t, exact intervals |
@@ -100,6 +111,38 @@ to the first frame instead of complaining.
 - **Bootstrap coverage** against clustered data with a known mean, which is the only test that catches a percentile off-by-one or resampling records instead of clusters.
 - **Planted leakage**: the same data scored with grouped and ungrouped splits, asserting the ungrouped score is inflated. The research's central warning as a regression test.
 - **Spreading frames across clips beats depth** at equal annotation cost, by more than fivefold in effective sample size.
+- **An identity switch halves association accuracy while leaving detection accuracy untouched**, which is the property that makes the tracking metric worth computing when every clip is stitched.
+- **The median catches what the mean hides**: a case where four of six withheld classes collapse while the mean moves seven percent is flagged, which is the exact pattern that concealed a sixty-one percent median collapse in the reference experiment.
+- **Generic localisation now contributes accepted boxes** rather than zero.
+
+## The architecture is now actually wired
+
+Earlier the two halves existed separately and the join was missing, so generic
+localisation contributed **zero** accepted boxes: detections came back labelled
+with the prompt that found them, failed the clip-label test, and were
+discarded. `naming.py` closes that. Measured on the fake backend, accepted boxes
+went from 12 to 18 on the same clip, and the leftover generic labels went to
+none.
+
+Two constraints keep it honest. The classifier's vocabulary is restricted to
+the clip's own labels plus its hard negatives, which is the multiple-instance
+constraint applied to naming rather than detection. And a crop that cannot be
+named confidently is rejected rather than guessed, requiring both an absolute
+floor and a margin over the runner-up, because the confusable siblings are
+exactly where a forced choice would be wrong and would look confident.
+
+## What the data modules establish
+
+Running `python3 -m vlmlab.cli datasets` prints the current position:
+
+- Nine vocabulary classes have downloadable public boxes, roughly 15,700 instances across four permissively licensed sets.
+- Six have none anywhere.
+- **Classification crops rescue four of those six**, about 3,600 images, because research-only use unblocked that corpus. Only two classes remain genuinely unsupplied and need your own footage.
+
+The balanced cap for the crop head comes out at 65 images per class, set by the
+sparsest target. Equal allocation is enforced in the plan because the macro
+average weights classes equally and proportional allocation inflates its
+variance by about a third.
 
 ## Bugs this process found
 
@@ -110,6 +153,9 @@ Written down because each was silent and each would have produced a plausible wr
 3. **The design effect divided by record count instead of cluster count**, so equally sized clusters wrongly reported a penalty of seven rather than one.
 4. **The prompt plan handed display strings to the federated deriver**, which keys on canonical names, so the negative set came out empty and the guaranteed-false-positive rule was silently disabled.
 5. **The fake propagator defaulted to the first frame** when a seed named an unknown frame, which would have hidden a real wiring error.
+6. **Renamed crops inherited the presence score of the generic concept** that found them, so the presence gate was judging a label against evidence about a different thing. Presence is now dropped on rename and the reason recorded.
+7. **The sweep's refusal branch was unreachable**, because the frozen model always satisfies its own retention floor. Choosing the frozen model is now reported as a real outcome, meaning fine-tuning bought nothing acceptable, rather than as no decision.
+8. **Three dangling references**: a cross-check module and a dataset descriptor were named in documentation but did not exist, and the two-GPU command the implementation guide printed used flags the command line did not accept.
 
 ## What is not verified
 

@@ -37,7 +37,7 @@ class PipelineError(RuntimeError):
 
 class ClipResult(object):
     def __init__(self, clip, grid, chunks, plan, detections, tracks, cascade,
-                 federated_labels):
+                 federated_labels, naming=None):
         self.clip = clip
         self.grid = grid
         self.chunks = tuple(chunks)
@@ -46,6 +46,7 @@ class ClipResult(object):
         self.tracks = tuple(tracks)
         self.cascade = cascade
         self.federated = federated_labels
+        self.naming = naming
 
     def summary(self):
         return {
@@ -61,6 +62,7 @@ class ClipResult(object):
             "n_stitched_tracks": sum(1 for t in self.tracks if t.spans_chunks),
             "labels_never_found": list(self.cascade.missing_labels),
             "reasons": self.cascade.reasons(),
+            "naming": self.naming.summary() if self.naming else None,
         }
 
 
@@ -120,8 +122,14 @@ def stitch_tracks(per_chunk_tracks, iou_threshold=0.5):
 
 
 def process_clip(clip, detector, propagator, registry, cfg, frame_dir=None,
-                 second_detector=None, logger=None):
-    """Run one clip end to end. Backend-agnostic."""
+                 second_detector=None, logger=None, crop_classifier=None):
+    """Run one clip end to end. Backend-agnostic.
+
+    When ``crop_classifier`` is supplied, detections from the generic
+    localisation prompts are given fine-grained names before the cascade. That
+    is the recommended architecture: without it those detections carry the
+    prompt that found them, fail the clip-label test, and contribute nothing.
+    """
     if cfg.detector.require_detection_head_boxes and \
             not detector.boxes_from_detection_head:
         raise PipelineError(
@@ -155,6 +163,19 @@ def process_clip(clip, detector, propagator, registry, cfg, frame_dir=None,
         path = _frame_path(clip.clip_id, idx, frame_dir)
         for batch in batches:
             detections.extend(detector.detect(path, batch))
+
+    # --- name the generic detections ---------------------------------------
+    naming = None
+    if crop_classifier is not None:
+        from vlmlab.naming import name_detections
+        naming = name_detections(
+            detections, clip, registry, crop_classifier,
+            min_confidence=cfg.cascade.crop_min_confidence,
+            min_margin=cfg.cascade.crop_min_margin,
+            hard_negatives=plan.negative_classes)
+        detections = list(naming.all_detections)
+        if logger:
+            logger.info("clip %s naming %s", clip.clip_id, naming.summary())
 
     if second_detector is not None:
         other = []
@@ -207,11 +228,13 @@ def process_clip(clip, detector, propagator, registry, cfg, frame_dir=None,
                                       cfg.detector.frame_size)
                           if cfg.detector.frame_size else None)
 
-    return ClipResult(clip, grid, chunks, plan, detections, tracks, cascade, fed)
+    return ClipResult(clip, grid, chunks, plan, detections, tracks, cascade,
+                      fed, naming=naming)
 
 
 def run_pipeline(clips, detector, propagator, registry, cfg, frame_dir=None,
-                 second_detector=None, logger=None, checkpoint=None):
+                 second_detector=None, logger=None, checkpoint=None,
+                 crop_classifier=None):
     """Process every clip, returning results and an aggregate report."""
     results = []
     for clip in clips:
@@ -219,7 +242,7 @@ def run_pipeline(clips, detector, propagator, registry, cfg, frame_dir=None,
             continue
         res = process_clip(clip, detector, propagator, registry, cfg,
                            frame_dir=frame_dir, second_detector=second_detector,
-                           logger=logger)
+                           logger=logger, crop_classifier=crop_classifier)
         results.append(res)
         if logger:
             logger.info("clip %s %s", clip.clip_id, res.summary())
@@ -234,5 +257,7 @@ def run_pipeline(clips, detector, propagator, registry, cfg, frame_dir=None,
                                for r in results),
         "clips_with_missing_labels": sum(1 for r in results
                                          if r.cascade.missing_labels),
+        "crops_named": sum(len(r.naming.named) for r in results if r.naming),
+        "crops_unnamed": sum(len(r.naming.rejected) for r in results if r.naming),
     }
     return tuple(results), report

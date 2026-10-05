@@ -156,6 +156,13 @@ class CascadeConfig:
                                 "unmeasured in the literature; half-day experiment")
     n_hard_negatives: int = _p("cascade.n_hard_negatives", 4, Provenance.ESTIMATED,
                                "docs/07 section 2", "documents say 3 to 5")
+    crop_min_confidence: float = _p("cascade.crop_min_confidence", 0.35,
+                                    Provenance.ESTIMATED, "docs/07 section 2",
+                                    "refuse to name a crop below this")
+    crop_min_margin: float = _p("cascade.crop_min_margin", 0.10,
+                                Provenance.ESTIMATED, "docs/07 section 2",
+                                "margin over the runner-up; the confusable "
+                                "siblings are where a forced choice goes wrong")
     max_mask_fragmentation: float = _p("cascade.max_mask_fragmentation", 0.35,
                                        Provenance.UNMEASURED, "docs/06 section 4",
                                        "audit required but no criterion given")

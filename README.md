@@ -31,7 +31,7 @@ An implementation of the three-phase plan lives in `vlmlab/`. It runs with
 **no dependencies at all**:
 
 ```bash
-python3 -m unittest discover tests          # 377 tests, standard library only
+python3 -m unittest discover tests          # 500 tests, standard library only
 python3 -m vlmlab.cli run --backend fake \
     --manifest examples/manifest.json --config examples/config.json
 ```
